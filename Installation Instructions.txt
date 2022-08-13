@@ -1,0 +1,14 @@
+dale_gender_conversation
+Another spin-off from Out and About, based on a potential-post-pride-parade conversation. If you're trans, this will enable Monika to support you on various aspects of your journey. Even if you're cis, there are aspects that you may want to download this mod for anyway, such as coming out as LGBT+ in general.
+
+To install: place in your DDLC /game directory. The /Submods folder should be inside /game, and the "/Gender Conversation" folder should be inside /Submods. This folder structure is to keep the zz_reminders .rpy from clashing with other submods that rely on files with the same name.
+
+To get the deadname conversation if your name has already been set: 
+* Create a new file in your DDLC /game directory called "dev_console.rpy" while MAS is closed.
+* Using a Python file editor, such as PyCharm, paste this into the newly-created dev_console file:
+"init python:
+  config.console = True"
+* Save the python file and exit.
+* Press shift+O when in a fresh MAS session (with Gender Conversation installed ofc), and type "jump mas_preferredname", then press Enter.
+
+Important: To get updates on this submod as they happen, you MUST have the Submod Updater Plugin! Otherwise you will be stuck on previous versions. Download this here: https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin
