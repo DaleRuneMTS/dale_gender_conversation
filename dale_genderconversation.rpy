@@ -4,11 +4,13 @@ init -990 python:
         author="DaleRuneMTS",
         name="Gender Conversation",
         description="Another spin-off from Out and About, based on a potential-post-pride-parade conversation. If you're trans, this will enable Monika to support you on various aspects of your journey. "
-        "Even if you're cis, there are aspects that you may want to download this mod for anyway, such as coming out as LGBT+ in general.",
-        version="1.0.0",
+        "Even if you're cis, there are aspects that you may want to download this mod for anyway, such as coming out as LGBT+ in general. "
+        "New to 1.0.1 - Pretend World now actually counts as a song!",
+        version="1.0.1",
         dependencies={},
         settings_pane=None,
         version_updates={
+        "DaleRuneMTS_dale_gender_conversation_1_0_0": "DaleRuneMTS_dale_gender_conversation_1_0_1"
         }
     )
 
@@ -981,7 +983,8 @@ init 5 python:
             category=[store.mas_songs.TYPE_SHORT],
             prompt="Pretend World",
             random=True
-        )
+        ),
+        code="SNG"
     )
 
 label mas_song_xeon:
