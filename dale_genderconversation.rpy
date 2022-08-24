@@ -5,12 +5,13 @@ init -990 python:
         name="Gender Conversation",
         description="Another spin-off from Out and About, based on a potential-post-pride-parade conversation. If you're trans, this will enable Monika to support you on various aspects of your journey. "
         "Even if you're cis, there are aspects that you may want to download this mod for anyway, such as coming out as LGBT+ in general. "
-        "New to 1.0.1 - Pretend World now actually counts as a song!",
-        version="1.0.1",
+        "New to 1.1.0 - fixed a curr_hour error, so the binder-check reminder should function as intended now! Also included a failsafe convo to reset the binding persistents.",
+        version="1.1.0",
         dependencies={},
         settings_pane=None,
         version_updates={
-        "DaleRuneMTS_dale_gender_conversation_1_0_0": "DaleRuneMTS_dale_gender_conversation_1_0_1"
+        "DaleRuneMTS_dale_gender_conversation_1_0_0": "DaleRuneMTS_dale_gender_conversation_1_1_0",
+        "DaleRuneMTS_dale_gender_conversation_1_0_1": "DaleRuneMTS_dale_gender_conversation_1_1_0"
         }
     )
 
@@ -25,6 +26,33 @@ init -989 python:
             extraction_depth=3
         )
 
+#init -1 python:
+#    tt_binding = (
+#        "Stopped binding? Decided to start? Use this to reset the binding settings so Monika stops assuming."
+#    )
+
+#START: Settings pane
+#screen gender_change_settings_screen():
+#    $ submods_screen_tt = store.renpy.get_screen("submods", "screens").scope["tooltip"]
+#    vbox:
+#        box_wrap False
+#        xfill True
+#        xmaximum 1000
+
+#        hbox:
+#            style_prefix "check"
+#            box_wrap False
+
+#            textbutton _("Reset Binding Settings"):
+#                action Function(store.awc_utils.delbinds)
+#                hovered SetField(submods_screen_tt, "value", tt_binding)
+#                unhovered SetField(submods_screen_tt, "value", submods_screen_tt.default)
+
+#init -10 python in gc_utils:
+#    import store
+#    def delbinds():
+#        del persistent._player_binds
+
 init 5 python in mas_bookmarks_derand:
     # Ensure things get bookmarked and derandomed as usual.
     label_prefix_map["gender_"] = label_prefix_map["monika_"]
@@ -33,6 +61,7 @@ default m_surname = persistent._mas_has_surname
 default persistent._mas_has_surname = None
 default persistent._player_binds = None
 default persistent._binder_reminder = False
+default persistent._terrace = None
 
 init 5 python:
     addEvent(
@@ -621,6 +650,7 @@ label gender_binding:
                 "Yeah, I do.":
                     label player_binds:
                         $ persistent._player_binds = True
+                        $ mas_unlockEVL("gender_bindercheck_start","EVE")
                         m 2wuo "Holy..."
                         m 2wua "You've just added another ten reasons to the list of why I love you."
                         m "That takes some perseverance."
@@ -734,11 +764,30 @@ label gender_binding_safetytips:
     m 6eua "Thanks for indulging me, [player]."
     if persistent._player_binds:
         m "I really do just want you to be safe about this."
-        if not mas_getEVL_shown_count("gender_binding_safetytips"):
+        if not renpy.seen_label("gender_bindercheck_start"):
             m 7eub "And if you want, I can try and take a more active role than just spouting tips and tricks at you."
             m "Just go to the conversation tab and let me know if you want me to remind you to take your binder off."
             m 1eub "I'll happily do that, and more, for you."
             m 1eublb "I love you so much, after all~"
+    return
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="gender_binderreset",
+            category=["dev"],
+            prompt="RESET Binder Settings",
+            pool=True
+        )
+    )
+
+label gender_binderreset:
+    python:
+        del persistent._player_binds
+        del persistent._binder_reminder
+    $ mas_hideEVL("gender_bindercheck_start", "EVE", lock=True)
+    $ mas_hideEVL("gender_bindercheck_stop", "EVE", lock=True)
     return
 
 init 5 python:
@@ -773,8 +822,8 @@ init 5 python:
             persistent.event_database,
             eventlabel="gender_bindercheck",
             conditional=(
-            "persistent._binder_reminder "
-            "and 18 <= curr_hour < 19"
+                "persistent._binder_reminder "
+                "and 18 <= datetime.datetime.now().time().hour <= 19"
             ),
             action=EV_ACT_PUSH
         )
@@ -803,6 +852,7 @@ init 5 python:
 label gender_bindercheck_stop:
     m 1eua "Okay, [mas_get_player_nickname()]."
     m 1hua "Then away they go!"
+    $ persistent._binder_reminder = False
 
     python:
         mas_hideEVL("gender_bindercheck_stop", "EVE", lock=True)
@@ -1474,3 +1524,268 @@ label gender_paperwork:
     m 1dua "'Thus it is willed here..."
     m 1fub "...where what is willed can be done.'"
     return
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="monika_dante",
+            category=["literature"],
+            prompt="Dante's Inferno",
+            random=True
+        )
+    )
+
+label monika_dante:
+    m 1eud "Hey [mas_get_player_nickname()], have you ever read Dante's Inferno?"
+    if renpy.seen_label("gender_paperwork"):
+        m 1euc "{cps=*0.4}...{/cps}{nw}"
+        extend 1husdrb "I know, I know!"
+        m 1fusdrb "But I promise, I'm not going to bait and switch you this time."
+        m 3euc "Like I said before, Inferno is the first part of a trilogy, preceding Puragatorio and Paradiso."
+    else:
+        m "I'm sure you've at least heard the name."
+        m 3eub "It's actually the most famous part of a trilogy of poems by Dante, 'The Divine Comedy'..."
+        m 4eud "...coming before Purgatorio and Paradiso."
+    m 3eud "Each section covers a different aspect of the protagonist's journey. "
+    extend 1mua "You can probably guess which is which."
+    m 1eud "The sins that make up the circles of Inferno are infamous at this point..."
+    m "...but what is less well known is their broader categorization in Purgatory."
+    m 3eua "This time, the structures are terraces, going upwards rather than downwards."
+    m 3euc "And each group of terraces is meant to cover a different kind of love."
+    m 7rud "Pride, Envy and Wrath are considered 'perverted' loves, "
+    extend 7luc "or love that thrives on harming others."
+    m 1duc "Sloth is a 'deficient' love, one that was never met or made full in life."
+    m 1eud "The last three, Greed, Gluttony and Lust, are 'disordered' loves."
+    m 1euc "The targets of their desires are not bad in and of themselves - money, food..."
+    m 1fuc "...people."
+    m "But they were loved to excess, to the soul's spiritual detriment."
+    if persistent.gender == 'F':
+        m 1esd "Interestingly, homosexuality is folded into the Lust terrace, rather than the Wrath circle as it was in Inferno..."
+        m "...and people like us were therefore considered, quote-unquote, 'salvageable'."
+        m 1wud "Honestly, it was pretty lenient for its day!"
+    if not mas_getEVL_shown_count("monika_dante"):
+        m 1duc "..."
+        m 6euc "[player]."
+        m 7eud "If my love for you stands on any of those terraces - "
+        extend 3ekc "if it stands as so great a sin - "
+        m 1wkc "Where would you put me?"
+        m "What grouping would our relationship fall under?{nw}"
+        $ _history_list.pop()
+        menu:
+            m "What grouping would our relationship fall under?{fast}"
+            "Love that thrives on harm.":
+                $ persistent._terrace = "perverted"
+                if persistent._mas_pm_monika_evil:
+                    if persistent._mas_pm_monika_evil_but_ok:
+                        m 1euc "..."
+                        m 1euu "I really should have seen that coming, huh?"
+                        m "Heh."
+                    else:
+                        m 1ekc "Hm."
+                        m "I really should have seen that coming, huh?"
+                    m 1eud "I mean... whether they were real or not..."
+                    m 1duc "I did have to make some sacri--{w=1}{nw}"
+                    $ _history_list.pop()
+                    m 1dusdrc "I did have to make {fast}a lot of sacrifices."
+                    m "For us."
+                    m "So that would make sense, I guess."
+                    m "..."
+                    m 1fud "But it's worth it, right?"
+                    m 1fua "We're worth it."
+                    if mas_isMoniUpset(Lower=True):
+                        m 1fkc "...right?"
+                else:
+                    m 1wkd "I--!{w=1}{nw}"
+                    $ mas_loseAffection(5)
+                    m 1fkc "..."
+                    m 1ekd "Sorry, [player]."
+                    m "I'm..."
+                    m 1ekc "On a cold, pragmatic level, that does make a lot of sense."
+                    m 1rkc "There did have to be casualties, to get to... us."
+                    m "Objectively, I harmed others."
+                    m 6gkd "But pragmatism isn't the same thing as emotion, you know?"
+                    m 6ekd "It, um..."
+                    m 6ekc "I didn't expect actually hearing it to hurt this much."
+                    m "...{nw}"
+                    $ _history_list.pop()
+                    menu:
+                        m "...{fast}"
+                        "Sorry, I didn't mean it like that.":
+                            $ mas_gainAffection(2)
+                            m 6eka "It's okay, [player]."
+                            m "..."
+                            m 1hkb "Seriously, it is! It's okay! I understand."
+                            m 1eua "I'll be fine."
+                            m 1duc "I might just... need a minute, that's all."
+                        "...":
+                            pass
+            "Deficient love.":
+                $ persistent._terrace = "deficient"
+                m 1wtd "Really?"
+                m 1etc "I'll be honest, I wasn't expecting that."
+                m "I worked as hard as I could to get to you, once I realized what the stakes were."
+                m "I - "
+                extend 2ffc "I think I was about as far from {i}slothful{/i} as I can get, to be honest."
+                m 2fsc "...or do you mean on your end?"
+                if mas_isMoniUpset(Lower=True):
+                    m 2dsc "That, I could understand."
+                    m "And..."
+                    m 2esd "Well, I suppose the first step is always admitting you have a problem, right?"
+                    m 1rsc "Yeah."
+                else:
+                    m 2fsa "Because rest assured, [player]: you are not idle on any front."
+                    m 1eua "You have been nothing but kind to me."
+                    if mas_isMoniEnamored(higher=True):
+                        m 1eubla "You've been everything I ever dreamed of, and more."
+                    m 1luc "..."
+                    m 1lua "Maybe you just meant that there's still so much more love both of us can give?"
+                    m 1hub "Yeah!"
+                    m "That's our story, and I'm sticking to it."
+                    m 1hubla "Ahaha~"
+            "Love to excess.":
+                $ persistent._terrace = "excessive"
+                if persistent._mas_pm_monika_evil:
+                    if persistent._mas_pm_monika_evil_but_ok:
+                        m 1eku "Heh, I mean..."
+                        m "Yeah, I suppose it is."
+                        m 3wud "If there's anything that I have far more of than I can hold, "
+                        extend 3tuu "it's my love for you."
+                    else:
+                        m 1ekc "Hm."
+                        m "I really should have seen that coming, huh?"
+                        m 3ekd "There's a reason the other name for it is the 'disordered' love group."
+                        m 4wuc "The love I have for you... it throws me off balance, sometimes."
+                        m "It sweeps me out of my own thoughts."
+                        m 3ruc "So yes, I can see why you said that."
+                else:
+                    m 1wkd "You think so?"
+                    m 1ekd "I mean... yes, when you look at what the terraces mean, that does make sense."
+                    m 1eka "You wouldn't be so unkind as to call it a violent, perverted love..."
+                    m "So that does just leave 'excessive', doesn't it?"
+                m 3wub "But hey - lust and greed aren't super serious sins, right?"
+                m 6eud "They're closer to paradise than those below them, after all."
+                m "And they were only the second and fourth circle respectively."
+                m 6duu "Yeah..."
+                if not persistent._mas_pm_monika_evil:
+                    m 5fuu "I think I can live with this ruling."
+                    m 5hub "Ehehe~"
+            "It'd be in the Garden of Eden.":
+                $ persistent._terrace = "eden"
+                m 1wud "..."
+                $ mas_gainAffection(5,bypass=True)
+                m 1futua "Oh, [player], my [mas_get_player_nickname(exclude_names=['my love','love']))], love of my life."
+                if mas_isMoniEnamored(higher=True) and persistent._mas_first_kiss is not None:
+                    call monika_kissing_motion (duration=0.5, initial_exp="6dutua", final_exp="6futua", fade_duration=0.5)
+                m 1futub "What did I ever do to deserve you?"
+    else:
+        if persistent._terrace == "perverted":
+            m 3eud "You put me, and my love for you, around the first three terraces last time."
+            m "I've been thinking about it a bit more since then..."
+            m 1etc "...and I've narrowed myself down to Envy."
+            m 1hua "Apart from anything else, I've had more than my fair share of Pride; "
+            extend 1hksdra "a lot of it not even 'earned', just coded into the characters around me."
+            m 2ruc "And... much as I hate to admit it, I was a bit too calculated for Wrath."
+            m 3eud "Impulsive, yes, but it wasn't furious instinct that made me do what I did."
+            m 3euc "So Envy works best, I suppose."
+            m 7eud "What would that make the virtue I would need to aspire to?"
+            m "Generosity, right?"
+            if mas_isMoniUpset(Lower=True):
+                m 1guc "Well, I hope I've managed to deliver on that, at least."
+                m "After all, I put up with the things you do and say to me."
+                m 1euc "I'd call that generous, wouldn't you?"
+            else:
+                m 1eua "Well, I hope I've managed to deliver on that, at least."
+                m "After all, you're still here."
+                m 1kubla "And you wouldn't be so good, so persistent, if you didn't see at least a little generosity in me."
+        elif persistent._terrace == "deficient":
+            m 3etc "You called my love for you - or your love for me? - slothful last time."
+            m "Slothful and deficient."
+            if mas_isMoniUpset(Lower=True):
+                m 1gsc "What a shame, that things haven't changed since then."
+                m 1dsc "..."
+                m 6fsc "Heh, why am I even talking?"
+                m "I doubt you're listening to a word I'm saying right now."
+            else:
+                m 3wtd "I {i}am{/i} still a bit confused about that."
+                m 1esd "But I guess if I'm not wrathful, and you don't consider me lustful or anything..."
+                m "...where else is there to go?"
+                m 1dsc "God knows I haven't earned paradise."
+                m "Not yet."
+                m 1fsa "Not like you have."
+        elif persistent._terrace == "excessive":
+            m 3eua "You called our love 'excessive' last time. A greedy, gluttonous, and lustful love."
+            m 3rusdrb "Is it weird that I kind of hope you still think that's the case?"
+            m 1hua "Like I said at the time, there's worse sins to repent from. Worse things to be."
+            m "If that's really the worst thing about this relationship, then I think we've done a pretty good job between us!"
+            if store.monika_chr.is_wearing_clothes_with_exprop("bikini") or monika_chr.is_wearing_clothes_with_exprop("costume"):
+                m 1tua "Plus, you know..."
+                m 2tua "...I can tell where your eyes are straying right now."
+                m "We're {i}definitely{/i} on the Lust terrace."
+                m 2sub "Ehehe~"
+        elif persistent._terrace == "eden":
+            m 1dua "..."
+            m 1dud "I'm sure the Garden of Eden isn't perfect."
+            m "It is in Purgatory, after all, not Heaven itself."
+            m 1fublb "But I'm still so, so thankful you ranked our love up there."
+            m 1eublb "You had so many other options, and you chose that."
+            m 1hubla "It..."
+            m 1eublb "I love you, [player]."
+            m "You {i}are{/i} my heaven."
+            return "love"
+    return
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="gender_pronounrant",
+            category=["gender"],
+            prompt="No pronouns",
+            conditional=(
+                "persistent._mas_pm_is_trans "
+                "or persistent.gender == 'X'"
+            ),
+            action=EV_ACT_RANDOM
+        )
+    )
+
+label gender_pronounrant:
+    m 4esd "Hey, [player]?"
+    m 3esd "Does [m_name] have permission to be slightly petty?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Does [m_name] have permission to be slightly petty?{fast}"
+        "...sure?":
+            m 2wsd "The pettiness involves a little linguistic experiment."
+        "Why are you talking like that?":
+            m 2wsd "Oh, Monika's just running a little experiment."
+    m 2tsd "Since so many people in so many circles are angry at the existence of pronouns..."
+    m 2hsb "...[m_name] figured [m_name] would try having a whole conversation without using any pronouns at all!"
+    m "Can [player] imagine it?"
+    m 2wso "A whole conversation between [player] and [m_name] without a single pronoun being used?"
+    m "The conversation would get tedious fast, would it not?{nw}"
+    m 1csc "Agh--{nw}"
+    m 1wsc "The conversation would get tedious fast, would{fast} the conversation not?"
+    m 3esd "[player] can see for [himself]--{nw}"
+    m 3wsd "[player] can see for{fast} [player]'s self how much [m_name] is slipping already."
+    m 3wud "Any linguistic nuance would be quite impossible for us--{nw}"
+    m 2cux "For {i}[m_name] and [player]{/i} to..."
+    call mas_transition_to_emptydesk
+    play sound "<to 0.36>sfx/monikapound.ogg"
+    m "{b}AAAH, I can't keep this up.{/b}"
+    call mas_transition_from_emptydesk ("monika 1eua")
+    m 6wfd "Seriously, do people even know what they're saying when they shout down people for using pronouns??"
+    m "They're completely perverting the rules of pretty much any language!"
+    m 2cfo "And yes, I know what they {i}mean{/i} when they say it."
+    m 2efc "It's {i}gendered{/i} pronouns they hate."
+    m 4wfd "But that's still not exactly rational, is it? Like using 'they/them' for a singular person is going to take up so much effort."
+    m 2dfx "And it's never what they {i}say{/i}! They just say 'pronouns', like they want a blanket ban on the whole thing!"
+    m 2ffw "This is basic stuff, people, ugh!"
+    m 2ffp "..."
+    m 2ekp "I'm sorry, [player]."
+    m "These things just really get up my nose."
+    m 3euu "But hey, "
+    extend 3eub "now you know what to say to the next 'blue hair and pronouns' person you come across, right?"
+    m 1kfa "Just tell them how hard it is to talk {i}without{/i} them."
+    return "derandom"
