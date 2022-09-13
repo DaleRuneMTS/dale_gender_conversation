@@ -5,13 +5,14 @@ init -990 python:
         name="Gender Conversation",
         description="Another spin-off from Out and About, based on a potential-post-pride-parade conversation. If you're trans, this will enable Monika to support you on various aspects of your journey. "
         "Even if you're cis, there are aspects that you may want to download this mod for anyway, such as coming out as LGBT+ in general. "
-        "New to 1.1.0 - fixed a curr_hour error, so the binder-check reminder should function as intended now! Also included a failsafe convo to reset the binding persistents.",
-        version="1.1.0",
+        "New to 1.1.1 - a couple of bug fixes, and a new 'It's been a good gender day' option to serve as a counterpart to the 'bad gender day' option.",
+        version="1.1.1",
         dependencies={},
         settings_pane=None,
         version_updates={
-        "DaleRuneMTS_dale_gender_conversation_1_0_0": "DaleRuneMTS_dale_gender_conversation_1_1_0",
-        "DaleRuneMTS_dale_gender_conversation_1_0_1": "DaleRuneMTS_dale_gender_conversation_1_1_0"
+        "DaleRuneMTS_dale_gender_conversation_1_0_0": "DaleRuneMTS_dale_gender_conversation_1_1_1",
+        "DaleRuneMTS_dale_gender_conversation_1_0_1": "DaleRuneMTS_dale_gender_conversation_1_1_1",
+        "DaleRuneMTS_dale_gender_conversation_1_1_0": "DaleRuneMTS_dale_gender_conversation_1_1_1"
         }
     )
 
@@ -1436,6 +1437,88 @@ init 5 python:
     addEvent(
         Event(
             persistent.event_database,
+            eventlabel="gender_goodgenderday",
+            category=["gender"],
+            prompt="It's been a good gender day, [m_name]!",
+            conditional=(
+                "persistent._mas_pm_is_trans "
+                "or persistent.gender == 'X'"
+            ),
+            pool=True,
+            rules={"no_unlock": None},
+            action=EV_ACT_UNLOCK
+        )
+    )
+
+label gender_goodgenderday:
+    m 1wub "Has it, now?"
+    m "I'm so glad to hear that."
+    m 3eua "Well, go on then, what's the news?"
+
+    show monika at t21
+    python:
+        option_list = [
+            ("I got an important appointment booked!", "gender_ggd_apptbooked",False,False),
+            ("I start hormone therapy today!","gender_ggd_hormones",False,False),
+            ("I've gotten approved for voice training.","gender_ggd_vocal",False,False),
+            ("I haven't been misgendered or deadnamed at all today.","gender_ggd_undead",False,False),
+            ("My change of name has officially gone through somewhere!","gender_ggd_namechange",False,False),
+            ("One of my official documents has been updated.","gender_ggd_docs",False,False),
+            ("Nothing specific, I just feel euphoric today.","gender_ggd_euphy",False,False),
+        ]
+
+    call screen mas_gen_scrollable_menu(option_list, mas_ui.SCROLLABLE_MENU_TALL_AREA, mas_ui.SCROLLABLE_MENU_XALIGN)
+    show monika at t11
+
+    $ selection = _return
+
+    jump expression selection
+
+    label gender_ggd_apptbooked:
+        m 1hub "Oh, that's wonderful, [player]!"
+        m 3rusdra "I know doctors and specialists have a habit of dragging their feet sometimes..."
+        m 1rua "...so that must be such a relief."
+        jump gender_ggd_post
+    label gender_ggd_hormones:
+        m 3sub "Wow, that really {i}is{/i} a good gender day!"
+        m 3eub "I know you've worked so hard for this, [player]. It must feel great, finally having the next step to your best self right there in your hand."
+        jump gender_ggd_post
+    label gender_ggd_vocal:
+        m 1wuo "Ooh! Good luck!"
+        m 1wuc "...{nw}"
+        extend 1hksdlb "Well, not good {i}luck{/i}, it's not a competition, it's..."
+        m 1dkc "*cough*"
+        if mas_isMoniAff(higher=True):
+            m 1eua "You know what I mean."
+        else:
+            m 1eka "Y-{w=0.5}you know what I meant. Right?"
+        jump gender_ggd_post
+    label gender_ggd_undead:
+        m 1hua "Yay!"
+        m "That means you're surrounding yourself with the right people!"
+        jump gender_ggd_post
+    label gender_ggd_namechange:
+        m 1hub "That's terrific, [mas_get_player_nickname()]!"
+        m 3eub "Seeing your name properly acknowledged by someone in authority... I can't imagine how validating that must feel."
+        jump gender_ggd_post
+    label gender_ggd_docs:
+        m 3eub "Excellent!"
+        m 1eua "That must feel so rewarding, [player]."
+        m "Knowing all the paperwork and hassle on your end has been worth it."
+        jump gender_ggd_post
+    label gender_ggd_euphy:
+        m 1hua "Then that's good enough for me, [mas_get_player_nickname()]."
+        m 1hub "Sometimes, a great mood can just be a great mood, ahaha!"
+
+    label gender_ggd_post:
+        m 1fub "Aww, I'm so happy for you."
+        m "Thanks for sharing this with me! Now I'm gonna feel great for the rest of the day too~"
+    return
+
+init 5 python:
+    addEvent(
+        Event(
+            persistent.event_database,
             eventlabel="gender_isitnormal",
             category=["gender","you"],
             prompt="Is it normal to feel disconnected from your gender?",
@@ -1674,7 +1757,7 @@ label monika_dante:
                 $ persistent._terrace = "eden"
                 m 1wud "..."
                 $ mas_gainAffection(5,bypass=True)
-                m 1futua "Oh, [player], my [mas_get_player_nickname(exclude_names=['my love','love']))], love of my life."
+                m 1futua "Oh, [player], my [mas_get_player_nickname(exclude_names=['my love','love'])], love of my life."
                 if mas_isMoniEnamored(higher=True) and persistent._mas_first_kiss is not None:
                     call monika_kissing_motion (duration=0.5, initial_exp="6dutua", final_exp="6futua", fade_duration=0.5)
                 m 1futub "What did I ever do to deserve you?"
